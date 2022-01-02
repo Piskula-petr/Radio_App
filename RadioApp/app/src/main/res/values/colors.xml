@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+
+    <color name="gray">#464557</color>
+
+    <!-- Hlavní -->
+    <color name="primary">#1f2233</color>
+    <color name="primaryLight">#47495d</color>
+    <color name="primaryDark">#00000c</color>
+
+    <!-- Vedlejší -->
+    <color name="secondary">#34356b</color>
+    <color name="secondaryLight">#615f9a</color>
+    <color name="secondaryDark">#021040</color>
+
+    <!-- Text -->
+    <color name="text">#eee</color>
+
+</resources>
