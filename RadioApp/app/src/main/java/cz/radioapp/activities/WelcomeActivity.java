@@ -8,13 +8,14 @@ import android.view.WindowManager;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import cz.radioapp.AppStorage;
 import cz.radioapp.R;
 
 public class WelcomeActivity extends AppCompatActivity {
 		
-		/**
-		 * Vytvoření aktivity
-		 */
+		private AppStorage appStorage;
+		
+		
 		@Override
 		protected void onCreate(Bundle savedInstanceState) {
 				
@@ -31,13 +32,20 @@ public class WelcomeActivity extends AppCompatActivity {
 				// Skrýt panel akcí
 				getSupportActionBar().hide();
 				
+				appStorage = new AppStorage(this);
+				
 				new Handler().postDelayed(new Runnable() {
 						
 						@Override
 						public void run() {
 								
-								// Přesměrování na hlavní aktivitu
-								startActivity(new Intent(WelcomeActivity.this, MainActivity.class));
+								if (appStorage.getSelectedStationIndex() != -1) {
+										
+										// Přesměrování na hlavní aktivitu
+										startActivity(new Intent(WelcomeActivity.this, MainActivity.class));
+										
+								// Přesměrování na výběr stanice, při nenalezení indexu
+								} else startActivity(new Intent(WelcomeActivity.this, StationSelectionActivity.class));
 						}
 						
 				}, 1500);

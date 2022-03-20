@@ -1,3 +1,71 @@
 <resources>
+
     <string name="app_name">RadioApp</string>
+
+    <!-- ID notifikace -->
+    <string name="stream_service_channel_id">STREAM_SERVICE_CHANNEL_ID</string>
+
+    <!-- Akce přesměrování -->
+    <string name="image_button_play_pause_click">imageButtonPlayPauseClick</string>
+    <string name="media_player_prepared">mediaPlayerPrepared</string>
+    <string name="media_player_start_playing">mediaPlayerStartPlaying</string>
+    <string name="media_player_stop_playing">mediaPlayerStopPlaying</string>
+
+    <!-- Názvy stanic -->
+    <string-array name="station_names">
+        <item>Rádio Impuls</item>
+        <item>Frekvence 1</item>
+        <item>Rádio Čas</item>
+        <item>Rádio Čas Rock</item>
+        <item>Rádio Blaník</item>
+        <item>Fajn Rádio</item>
+        <item>Hitrádio Orion</item>
+        <item>Rádio Kiss</item>
+        <item>Evropa 2</item>
+        <item>Rádio Beat</item>
+        <item>Rádio Krokodýl</item>
+        <item>Helax</item>
+        <item>Rádio Haná</item>
+        <item>Express Rádio</item>
+        <item>Free Rádio</item>
+    </string-array>
+
+    <!-- Nízká kvalita zdrojů stanic -->
+    <string-array name="station_low_quality_data_sources">
+        <item>http://icecast1.play.cz/impuls64.mp3</item>
+        <item>http://20423.live.streamtheworld.com/FREKVENCE1AAC.aac</item>
+        <item>http://icecast7.play.cz/casradio64.mp3</item>
+        <item>http://icecast7.play.cz/casrock64.mp3</item>
+        <item>http://ice.abradio.cz/blanikcz64.mp3</item>
+        <item>http://ice.abradio.cz/fajn64.mp3</item>
+        <item>http://ice.abradio.cz/orion64.mp3</item>
+        <item>http://icecast1.play.cz/kiss64.mp3</item>
+        <item>https://playerservices.streamtheworld.com/api/livestream-redirect/EVROPA2AAC.aac</item>
+        <item>http://icecast1.play.cz/beat64.mp3</item>
+        <item>http://icecast-u2.play.cz/krokodyl64.mp3</item>
+        <item>http://ice.abradio.cz/helax64.mp3</item>
+        <item>http://icecast3.play.cz/hana64.mp3</item>
+        <item>http://icecast5.play.cz/expres64mp3</item>
+        <item>http://icecast6.play.cz/freeradio64.mp3</item>
+    </string-array>
+
+    <!-- Vysoká kvalita zdrojů stanic -->
+    <string-array name="station_high_quality_data_sources">
+        <item>http://icecast5.play.cz/impuls128.mp3</item>
+        <item>http://20423.live.streamtheworld.com/FREKVENCE1AAC.aac</item>
+        <item>http://icecast6.play.cz/casradio128.mp3</item>
+        <item>http://icecast6.play.cz/casrock128.mp3</item>
+        <item>http://ice.abradio.cz/blanikcz128.mp3</item>
+        <item>http://ice.abradio.cz/fajn128.mp3</item>
+        <item>http://ice.abradio.cz/orion128.mp3</item>
+        <item>http://icecast1.play.cz/kiss128.mp3</item>
+        <item>https://ice.actve.net/fm-evropa2-128</item>
+        <item>http://icecast2.play.cz/radiobeat128.mp3</item>
+        <item>http://icecast4.play.cz/krokodyl128.mp3.m3u</item>
+        <item>http://ice.abradio.cz/helax128.mp3</item>
+        <item>http://icecast8.play.cz/hana160.mp3</item>
+        <item>http://icecast8.play.cz/expres128mp3</item>
+        <item>http://icecast8.play.cz/freeradio128.mp3</item>
+    </string-array>
+
 </resources>
