@@ -1,15 +1,34 @@
 <resources>
 
     <string name="app_name">RadioApp</string>
+    <string name="station_selection">Výběr stanice</string>
+    <string name="settings">Nastavení</string>
+
+    <!-- Oznámení -->
+    <string name="bluetooth_device_disconnected">Bluetooth zařízení odpojeno</string>
+    <string name="bluetooth_device_connected">Bluetooth zařízení připojeno</string>
+    <string name="audio_device_disconnected">Audio zařízení odpojeno</string>
+    <string name="check_connectivity">Zkontrolujte své připojení k internetu</string>
+
+    <!-- Nastavení -->
+    <string name="high_quality">Vysoká kvalita přehrávání</string>
+    <string name="change_to_high_quality">Klikněte pro změnu na vysokou kvalitu</string>
+    <string name="low_quality">Nízká kvalita přehrávání</string>
+    <string name="change_to_low_quality">Klikněte pro změnu na nízkou kvalitu</string>
+    <string name="auto_play">Automatické přehrávání</string>
+    <string name="change_to_enable_auto_play">Klikněte pro povolení automatického přehrávání</string>
+    <string name="change_to_disable_auto_play">Klikněte pro zakázání automatického přehrávání</string>
 
     <!-- ID notifikace -->
     <string name="stream_service_channel_id">STREAM_SERVICE_CHANNEL_ID</string>
 
     <!-- Akce přesměrování -->
-    <string name="image_button_play_pause_click">imageButtonPlayPauseClick</string>
     <string name="media_player_prepared">mediaPlayerPrepared</string>
+    <string name="media_player_stop_start_playing">mediaPlayerStopStartPlaying</string>
     <string name="media_player_start_playing">mediaPlayerStartPlaying</string>
     <string name="media_player_stop_playing">mediaPlayerStopPlaying</string>
+    <string name="media_player_restart_playing">mediaPlayerRestartPlaying</string>
+    <string name="media_player_buffering">mediaPlayerBuffering</string>
 
     <!-- Názvy stanic -->
     <string-array name="station_names">

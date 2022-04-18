@@ -1,6 +1,7 @@
 package cz.radioapp.activities;
 
 import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,13 +9,18 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,6 +30,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import cz.radioapp.AppStorage;
 import cz.radioapp.R;
+import cz.radioapp.enums.ConnectionType;
+import cz.radioapp.services.StreamService;
 import wseemann.media.FFmpegMediaMetadataRetriever;
 import wseemann.media.FFmpegMediaMetadataRetriever.Metadata;
 
@@ -31,46 +39,128 @@ public class MainActivity extends AppCompatActivity {
 
     private ImageButton imageButtonPlayPause;
     private TextView textViewStationName, textViewSongName;
-    private ImageView imageViewStationNames, imageViewVolume;
-    
+    private ImageView imageViewStationNames, imageViewSettings, imageViewVolume, imageViewConnectivity;
     private SeekBar seekBarVolume;
+    private ProgressBar progressBar;
     private AudioManager audioManager;
-    private UpdateSongName updateSongName;
+    private Animation animation;
     
+    private UpdateSongName updateSongName;
     private AppStorage appStorage;
+
     private String stationName;
     private String stationDataSource;
-    
-    private boolean mediaPlayerPlaying = false;
-    private boolean noConnectivity = false;
-    private boolean mediaPlayerStopBuffering = false;
-    
+    private ConnectionType connectionType = ConnectionType.NONE;
+
     private BroadcastReceiver connectivityReceiver = new BroadcastReceiver() {
         
         @RequiresApi(api = Build.VERSION_CODES.M)
         @Override
         public void onReceive(Context context, Intent intent) {
-            
-            noConnectivity = intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
-    
-            // Zastavení přehrávání
-            if (noConnectivity) {
-                
-                imageButtonPlayPause.setForeground(getDrawable(R.drawable.play));
-                textViewSongName.setVisibility(View.INVISIBLE);
-            }
+
+			ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+			Network network = connectivityManager.getActiveNetwork();
+			
+			if (network != null) {
+				
+				NetworkCapabilities networkCapabilities = connectivityManager.getNetworkCapabilities(network);
+	
+				// Připojení přes wifi
+				if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+	
+					imageViewConnectivity.setImageResource(R.drawable.wifi);
+	
+					// Resetování přehrávače
+					if (connectionType == ConnectionType.NETWORK || connectionType == ConnectionType.NONE)
+						sendBroadcast(new Intent(getString(R.string.media_player_restart_playing)));
+					
+					connectionType = ConnectionType.WIFI;
+	
+				// Připojení přes mobilní síť
+				} else if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+	
+					imageViewConnectivity.setImageResource(R.drawable.network);
+	
+					// Resetování přehrávače
+					if (connectionType == ConnectionType.NONE)
+						sendBroadcast(new Intent(getString(R.string.media_player_restart_playing)));
+		
+					connectionType = ConnectionType.NETWORK;
+				}
+	
+			// Žádné připojení
+			} else {
+	
+				imageViewConnectivity.setImageResource(R.drawable.no_connectivity);
+	
+				sendBroadcast(new Intent(getString(R.string.media_player_stop_start_playing)));
+				
+				connectionType = ConnectionType.NONE;
+			}
         }
     };
     
+    private BroadcastReceiver audioReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+	
+			Intent streamServiceIntent = new Intent();
+			
+			// Odpojení audio zařízení
+			if (Intent.ACTION_HEADSET_PLUG.equals(intent.getAction())) {
+				
+				int plugState = intent.getIntExtra("state", -1);
+				
+				if (plugState == 0) {
+					
+					streamServiceIntent.setAction(getString(R.string.media_player_stop_start_playing));
+					streamServiceIntent.putExtra("isAudioDeviceDisconnected", true);
+					sendBroadcast(streamServiceIntent);
+					
+					Toast.makeText(MainActivity.this, getString(R.string.audio_device_disconnected), Toast.LENGTH_LONG).show();
+				}
+			
+        	// Odpojení bluetooth zařízení
+			} else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(intent.getAction())) {
+	
+				streamServiceIntent.setAction(getString(R.string.media_player_stop_start_playing));
+				streamServiceIntent.putExtra("isAudioDeviceDisconnected", true);
+				sendBroadcast(streamServiceIntent);
+				
+                Toast.makeText(MainActivity.this, getString(R.string.bluetooth_device_disconnected), Toast.LENGTH_LONG).show();
+            
+            // Připojení bluetooth zažízení
+            } else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())) {
+	
+				streamServiceIntent.setAction(getString(R.string.media_player_restart_playing));
+				streamServiceIntent.putExtra("isConnectedViaWifi", true);
+				sendBroadcast(streamServiceIntent);
+            	
+            	Toast.makeText(MainActivity.this, getString(R.string.bluetooth_device_connected), Toast.LENGTH_LONG).show();
+			}
+        }
+    };
+
     private BroadcastReceiver mediaPlayerPreparedReceiver = new BroadcastReceiver() {
         
         @Override
         public void onReceive(Context context, Intent intent) {
+        
+			textViewSongName.setVisibility(View.VISIBLE);
+			imageButtonPlayPause.setEnabled(true);
+        }
+    };
     
-            textViewSongName.setVisibility(View.VISIBLE);
-            imageButtonPlayPause.setEnabled(true);
+    private BroadcastReceiver mediaPlayerBuffering = new BroadcastReceiver() {
+        
+        @Override
+        public void onReceive(Context context, Intent intent) {
             
-            mediaPlayerPlaying = true;
+			boolean isBuffering = intent.getBooleanExtra("isBuffering", false);
+			
+			progressBar.setVisibility((isBuffering ? View.VISIBLE : View.INVISIBLE));
+			textViewSongName.setVisibility((isBuffering ? View.INVISIBLE : View.VISIBLE));
         }
     };
     
@@ -80,9 +170,10 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
     
-            imageButtonPlayPause.setForeground(getDrawable(R.drawable.pause));
-            
-            updateSongName.start();
+			imageButtonPlayPause.setForeground(getDrawable(R.drawable.pause));
+			textViewSongName.setVisibility(View.VISIBLE);
+			
+			updateSongName.start();
         }
     };
     
@@ -92,10 +183,10 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
     
-            imageButtonPlayPause.setForeground(getDrawable(R.drawable.play));
-            textViewSongName.setVisibility(View.INVISIBLE);
-            
-            updateSongName.reset();
+			imageButtonPlayPause.setForeground(getDrawable(R.drawable.play));
+			textViewSongName.setVisibility(View.INVISIBLE);
+			
+			updateSongName.reset();
         }
     };
     
@@ -115,18 +206,29 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().hide();
     
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
+    
+        animation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fade_in);
         
         // Registrace receiverů
         registerReceiver(connectivityReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+        registerReceiver(audioReceiver, new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED));
+        registerReceiver(audioReceiver, new IntentFilter(BluetoothDevice.ACTION_ACL_CONNECTED));
+        registerReceiver(audioReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
         registerReceiver(mediaPlayerPreparedReceiver, new IntentFilter(getString(R.string.media_player_prepared)));
         registerReceiver(mediaPlayerStartPlayingReceiver, new IntentFilter(getString(R.string.media_player_start_playing)));
         registerReceiver(mediaPlayerStopPlayingReceiver, new IntentFilter(getString(R.string.media_player_stop_playing)));
+        registerReceiver(mediaPlayerBuffering, new IntentFilter(getString(R.string.media_player_buffering)));
         
         appStorage = new AppStorage(this);
         int selectedStationIndex = appStorage.getSelectedStationIndex();
         
+        // Výběr vysoké / nízké kvality přehrávání
+        String[] stationsDataSource = getResources().getStringArray((appStorage.getHighQualityState()
+            ? R.array.station_high_quality_data_sources
+                : R.array.station_low_quality_data_sources));
+        
         stationName = getResources().getStringArray(R.array.station_names)[selectedStationIndex];
-        stationDataSource = getResources().getStringArray(R.array.station_high_quality_data_sources)[selectedStationIndex];
+        stationDataSource = stationsDataSource[selectedStationIndex];
         
         // Spuštění služby na pozadí
         Intent streamService = new Intent(this, StreamService.class);
@@ -134,6 +236,9 @@ public class MainActivity extends AppCompatActivity {
         streamService.putExtra("stationDataSource", stationDataSource);
         
         startService(streamService);
+        
+        // Ikona konektivity
+        imageViewConnectivity = findViewById(R.id.imageViewConnectivity);
         
         // Název rádia
         textViewStationName = findViewById(R.id.textViewStationName);
@@ -148,6 +253,8 @@ public class MainActivity extends AppCompatActivity {
         textViewSongName.setSingleLine(true);
         textViewSongName.setEllipsize(TextUtils.TruncateAt.MARQUEE);
     
+        progressBar = findViewById(R.id.progressBar);
+        
         // Výběr názvu stanice
         imageViewStationNames = findViewById(R.id.imageViewStationNames);
         imageViewStationNames.setOnClickListener(new View.OnClickListener() {
@@ -156,11 +263,27 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 
+                imageViewStationNames.startAnimation(animation);
+                
                 // Přesměrování na výběr stanice
                 startActivity(new Intent(MainActivity.this, StationSelectionActivity.class));
             }
         });
     
+        // Nastavení
+        imageViewSettings = findViewById(R.id.imageViewSettings);
+        imageViewSettings.setOnClickListener(new View.OnClickListener() {
+            
+            @Override
+            public void onClick(View v) {
+                
+                imageViewSettings.startAnimation(animation);
+                
+                // Přesměrování do nastavení
+                startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+            }
+        });
+        
         // Ikona hlasitosti
         imageViewVolume = findViewById(R.id.imageViewVolume);
     
@@ -203,12 +326,14 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 
                 // Offline
-                if (noConnectivity) {
+                if (connectionType == ConnectionType.NONE) {
                     
-                    Toast.makeText(getApplicationContext(), "Zkontrolujte své připojení k internetu.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), getString(R.string.check_connectivity), Toast.LENGTH_LONG).show();
                     
                 // Online
-                } else sendBroadcast(new Intent(getString(R.string.image_button_play_pause_click)));
+                } else sendBroadcast(new Intent(getString(R.string.media_player_stop_start_playing)));
+                
+                progressBar.setVisibility(View.INVISIBLE);
             }
         });
     }
@@ -218,10 +343,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         
+        // Zrušení receiverů
         unregisterReceiver(connectivityReceiver);
+        unregisterReceiver(audioReceiver);
         unregisterReceiver(mediaPlayerPreparedReceiver);
         unregisterReceiver(mediaPlayerStartPlayingReceiver);
         unregisterReceiver(mediaPlayerStopPlayingReceiver);
+        unregisterReceiver(mediaPlayerBuffering);
         
         stopService(new Intent(this, StreamService.class));
     }
@@ -230,15 +358,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         
-        // Zvýšení hlasitosti
-        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-            
-            seekBarVolume.setProgress(seekBarVolume.getProgress() + 1);
-            
-        // Snížení hlasitosti
-        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-
-            seekBarVolume.setProgress(seekBarVolume.getProgress() - 1);
+        switch (keyCode) {
+    
+            // Zvýšení hlasitosti
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                seekBarVolume.setProgress(seekBarVolume.getProgress() + 1); break;
+    
+            // Snížení hlasitosti
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                seekBarVolume.setProgress(seekBarVolume.getProgress() - 1); break;
         }
         
         // Změna ikony hlasitosti
@@ -328,8 +456,6 @@ public class MainActivity extends AppCompatActivity {
                     if (metadata != null) {
                         
                         String newSongName = (metadata.has("StreamTitle") ? metadata.getString("StreamTitle") : "");
-    
-                        System.out.println("Název skladby: " + newSongName);
                         
                         textViewSongName.post(new Runnable() {
         

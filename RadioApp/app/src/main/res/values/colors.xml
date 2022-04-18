@@ -3,6 +3,7 @@
 <resources>
 
     <color name="gray">#464557</color>
+    <color name="grayLight">#808080</color>
 
     <!-- Hlavní -->
     <color name="primary">#1f2233</color>

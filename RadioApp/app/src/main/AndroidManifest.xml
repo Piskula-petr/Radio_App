@@ -8,7 +8,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
 
     <application
         android:allowBackup="true"
@@ -25,6 +26,7 @@
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -32,13 +34,14 @@
         <!-- Hlavní aktivita -->
         <activity android:name=".activities.MainActivity" />
 
-        <!--  Výběr stanice -->
-        <activity
-            android:name=".activities.StationSelectionActivity"
-            android:parentActivityName=".activities.MainActivity" />
+        <!-- Výběr stanice -->
+        <activity android:name=".activities.StationSelectionActivity" />
+
+        <!-- Nastavení -->
+        <activity android:name=".activities.SettingsActivity" android:parentActivityName=".activities.MainActivity" />
 
         <!-- Streamovací služba -->
-        <service android:name=".activities.StreamService" />
+        <service android:name=".services.StreamService" />
 
     </application>
 </manifest>

@@ -44,4 +44,58 @@ public class AppStorage {
 				return selectedStation;
 		}
 		
+		
+		/**
+		 * Uložení stavu o vysoké kvalitě přehrávání
+		 *
+		 * @param isHighQualityEnable
+		 */
+		public void saveHighQualityState(boolean isHighQualityEnable) {
+				
+				SharedPreferences.Editor editor = context.getSharedPreferences("settings", Context.MODE_PRIVATE).edit();
+				editor.putBoolean("quality", isHighQualityEnable);
+				editor.apply();
+		}
+		
+		
+		/**
+		 * Získání stavu o vysoké kvalitě přehrávání
+		 *
+		 * @return - vrací boolean hodnotu true - výsoká kvalita / false - nízká kvalita [výchozí hodnota true]
+		 */
+		public boolean getHighQualityState() {
+				
+				SharedPreferences sharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
+				boolean isHighQualityEnable = sharedPreferences.getBoolean("quality", true);
+				
+				return isHighQualityEnable;
+		}
+		
+		
+		/**
+		 * Uložení stavu automatického přehrávání
+		 *
+		 * @param isEnableAutoPlay
+		 */
+		public void saveAutoPlayState(boolean isEnableAutoPlay) {
+				
+				SharedPreferences.Editor editor = context.getSharedPreferences("settings", Context.MODE_PRIVATE).edit();
+				editor.putBoolean("autoPlay", isEnableAutoPlay);
+				editor.apply();
+		}
+		
+		
+		/**
+		 * Získání stavu o automatickém přehrávání
+		 *
+		 * @return - vrací boolean hodnotu true - automatické přehrávání povoleno / false - automatické přehrávání zakázáno
+		 */
+		public boolean getAutoPlayState() {
+				
+				SharedPreferences sharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
+				boolean isEnableAutoPlay = sharedPreferences.getBoolean("autoPlay", false);
+				
+				return isEnableAutoPlay;
+		}
+		
 }
