@@ -292,10 +292,16 @@ public class MainActivity extends AppCompatActivity {
         
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         
+        int volumeLevel = appStorage.getInitialVolumeState()
+			? appStorage.getCustomVolume()
+				: audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volumeLevel, 0);
+        
         // Posuvník hlasitosti
         seekBarVolume = findViewById(R.id.seekBarVolume);
         seekBarVolume.setMax(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
-        seekBarVolume.setProgress(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
+        seekBarVolume.setProgress(volumeLevel);
         seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             
             @Override

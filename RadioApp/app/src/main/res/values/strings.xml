@@ -18,6 +18,9 @@
     <string name="auto_play">Automatické přehrávání</string>
     <string name="change_to_enable_auto_play">Klikněte pro povolení automatického přehrávání</string>
     <string name="change_to_disable_auto_play">Klikněte pro zakázání automatického přehrávání</string>
+    <string name="volume">Počáteční hlasitost</string>
+    <string name="change_to_system_volume">Klikněte pro nastavení hlasitosti podle systému</string>
+    <string name="change_to_custom_volume">Klikněte pro nastavení vlastní hlasitosti</string>
 
     <!-- ID notifikace -->
     <string name="stream_service_channel_id">STREAM_SERVICE_CHANNEL_ID</string>
@@ -52,7 +55,7 @@
     <!-- Nízká kvalita zdrojů stanic -->
     <string-array name="station_low_quality_data_sources">
         <item>http://icecast1.play.cz/impuls64.mp3</item>
-        <item>http://20423.live.streamtheworld.com/FREKVENCE1AAC.aac</item>
+        <item>https://20853.live.streamtheworld.com/FREKVENCE1AAC.aac</item>
         <item>http://icecast7.play.cz/casradio64.mp3</item>
         <item>http://icecast7.play.cz/casrock64.mp3</item>
         <item>http://ice.abradio.cz/blanikcz64.mp3</item>
@@ -71,7 +74,7 @@
     <!-- Vysoká kvalita zdrojů stanic -->
     <string-array name="station_high_quality_data_sources">
         <item>http://icecast5.play.cz/impuls128.mp3</item>
-        <item>http://20423.live.streamtheworld.com/FREKVENCE1AAC.aac</item>
+        <item>http://ice.actve.net/fm-frekvence1-128</item>
         <item>http://icecast6.play.cz/casradio128.mp3</item>
         <item>http://icecast6.play.cz/casrock128.mp3</item>
         <item>http://ice.abradio.cz/blanikcz128.mp3</item>
@@ -80,7 +83,7 @@
         <item>http://icecast1.play.cz/kiss128.mp3</item>
         <item>https://ice.actve.net/fm-evropa2-128</item>
         <item>http://icecast2.play.cz/radiobeat128.mp3</item>
-        <item>http://icecast4.play.cz/krokodyl128.mp3.m3u</item>
+        <item>http://icecast4.play.cz/krokodyl128.mp3</item>
         <item>http://ice.abradio.cz/helax128.mp3</item>
         <item>http://icecast8.play.cz/hana160.mp3</item>
         <item>http://icecast8.play.cz/expres128mp3</item>

@@ -21,9 +21,10 @@ import java.io.IOException;
 import cz.radioapp.AppStorage;
 import cz.radioapp.R;
 
-public class StreamService extends Service {
+public class StreamService extends Service implements AudioManager.OnAudioFocusChangeListener {
 
     private MediaPlayer mediaPlayer;
+    private AudioManager audioManager;
 
     private AppStorage appStorage;
 
@@ -41,7 +42,7 @@ public class StreamService extends Service {
 		
         // Zastavení přehrávání
         if (mediaPlayerPlaying || isAudioDeviceDisconnected)
-        	stopPlaying();
+            stopPlaying();
 
         // Spuštění přehrávání
         else startPlaying(true);
@@ -54,31 +55,31 @@ public class StreamService extends Service {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 		
-		boolean isConnectedViaWifi = intent.getBooleanExtra("isConnectedViaWifi", false);
-		
-		stopPlaying();
-		
-		// Vteřinový delay, při wifi připojení
-		if (isConnectedViaWifi) {
-			
-			try {
-				
-				Thread.sleep(1_000);
-				
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		startPlaying(false);
+        boolean isConnectedViaWifi = intent.getBooleanExtra("isConnectedViaWifi", false);
+
+        stopPlaying();
+
+        // Vteřinový delay, při wifi připojení
+        if (isConnectedViaWifi) {
+
+            try {
+
+                Thread.sleep(1_000);
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        startPlaying(false);
 		}
 	};
-
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
+ 
+	
+	@RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
+    	
         stationName = intent.getStringExtra("stationName");
         stationDataSource = intent.getStringExtra("stationDataSource");
 
@@ -96,16 +97,21 @@ public class StreamService extends Service {
 
         // Přehrávač
         mediaPlayer = new MediaPlayer();
-        //mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
 
             @Override
             public void onPrepared(MediaPlayer mp) {
+            
+                int requestAudioFocusResult = audioManager.requestAudioFocus(StreamService.this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
-                sendBroadcast(new Intent(getString(R.string.media_player_prepared)));
+                if (requestAudioFocusResult == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
 
-                mediaPlayer.start();
+                      mediaPlayer.start();
+                      sendBroadcast(new Intent(getString(R.string.media_player_prepared)));
+
+                      mediaPlayerPlaying = true;
+                }
             }
         });
 
@@ -140,6 +146,9 @@ public class StreamService extends Service {
         // Automatické spuštění přehrávání
         if (appStorage.getAutoPlayState()) startPlaying(true);
 
+        // Audio manager
+        audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+        
         return START_NOT_STICKY;
     }
 
@@ -147,8 +156,12 @@ public class StreamService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        
+        if (mediaPlayer != null) {
 
-        if (mediaPlayer != null) mediaPlayer.release();
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
 
         // Zrušení receiverů
         unregisterReceiver(mediaPlayerStopStartPlayingReceiver);
@@ -161,9 +174,31 @@ public class StreamService extends Service {
     public IBinder onBind(Intent intent) {
         return null;
     }
-
-
-    /**
+	
+    
+	@RequiresApi(api = Build.VERSION_CODES.M)
+	@Override
+	public void onAudioFocusChange(int focusChange) {
+    	
+    	switch (focusChange) {
+    		
+    		// Ztráta zvukové priority
+			case AudioManager.AUDIOFOCUS_LOSS:
+			
+			// Ztráta zvukové priority na omezenou dobu
+			case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+				stopPlaying();
+				break;
+		
+			// Získání zvukové priority
+			case AudioManager.AUDIOFOCUS_GAIN:
+				startPlaying(true);
+				break;
+		}
+	}
+	
+	
+	/**
      * Spuštění přehrávání
      */
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -186,8 +221,6 @@ public class StreamService extends Service {
             e.printStackTrace();
         }
 
-        mediaPlayerPlaying = true;
-
         sendBroadcast(new Intent(getString(R.string.media_player_start_playing)));
     }
 
@@ -198,11 +231,15 @@ public class StreamService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void stopPlaying() {
 
-        mediaPlayer.reset();
-
-        mediaPlayerPlaying = false;
-
-        sendBroadcast(new Intent(getString(R.string.media_player_stop_playing)));
+        if (mediaPlayer != null) {
+        
+			mediaPlayer.reset();
+			sendBroadcast(new Intent(getString(R.string.media_player_stop_playing)));
+	
+			mediaPlayerPlaying = false;
+	
+			audioManager.abandonAudioFocus(StreamService.this);
+		}
     }
 
 }
